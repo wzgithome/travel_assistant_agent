@@ -6,6 +6,7 @@ from tools.budget import estimate_budget
 from tools.map_api import show_map, get_route
 from tools.date import get_current_date
 from tools.holiday import check_holiday
+from tools.hotel import get_hotel
 
 available_tools = {
     "get_weather": get_weather,
@@ -18,4 +19,5 @@ available_tools = {
     "get_route": get_route,
     "get_current_date": get_current_date,
     "check_holiday": check_holiday,
+    "get_hotel": get_hotel,
 }

@@ -130,10 +130,12 @@ body {
   transition: max-height 0.3s ease, padding 0.3s ease;
 }
 .tool-card-body.open {
-  max-height: 400px;
+  max-height: none;
   padding: 12px 14px;
-  overflow-y: auto;
+  overflow: visible;
 }
+.tool-card.completed { opacity: 0.85; }
+.tool-card.completed .tool-card-header { background: var(--gray-100); }
 
 .tool-section {
   margin-bottom: 10px;
@@ -410,27 +412,17 @@ async function sendMessage() {
           if (event.type === 'status') {
             // 移除上一轮的流式显示
             removeTokenStream();
-            // 折叠所有已有的工具卡片
-            document.querySelectorAll('.tool-card-body.open').forEach(body => {
-              body.classList.remove('open');
-              body.previousElementSibling.querySelector('.arrow').classList.remove('open');
+            // 标记上一个工具卡片为已完成（不折叠，只降低透明度）
+            document.querySelectorAll('.tool-card:not(.completed)').forEach(card => {
+              card.classList.add('completed');
             });
             // Create a new tool card for each step
             toolState = createToolCard();
             toolState.header.querySelector('.step-title').textContent = `工具调用 #${event.step}`;
           } else if (event.type === 'token') {
-            // 实时流式显示 LLM 输出
-            if (!currentTokenDiv) {
-              currentTokenDiv = document.createElement('div');
-              currentTokenDiv.className = 'token-stream';
-              currentTokenDiv.innerHTML = '<span class="token-text"></span><span class="cursor"></span>';
-              chatArea.appendChild(currentTokenDiv);
-            }
-            currentTokenText += event.content;
-            currentTokenDiv.querySelector('.token-text').textContent = currentTokenText;
-            scrollToBottom();
+            // 工具调用步骤中不显示原始 token，只在最终回答时显示
+            // 这里静默丢弃，避免显示 Thought:/Action: 原始文本
           } else if (event.type === 'thought' || event.type === 'action' || event.type === 'observation') {
-            removeTokenStream();
             if (toolState) updateToolCard(toolState, event);
           } else if (event.type === 'answer') {
             gotAnswer = true;

@@ -24,6 +24,7 @@ AGENT_SYSTEM_PROMPT = """
 - get_transport(city) 交通指南
 - get_restaurant(city, cuisine_type="all") 美食推荐 cuisine_type: all/local/famous/budget/high-end
 - estimate_budget(city, days=3, travel_style="mid-range") 预算估算 travel_style: budget/mid-range/luxury
+- get_hotel(city, budget_level="mid-range") 住宿推荐 budget_level: budget/mid-range/luxury
 - show_map(city, attractions) 景点位置，多个景点逗号分隔
 - get_route(city, origin, destination, mode="walk") 路线查询 mode: walk/drive/bus/subway，默认最短时间
 

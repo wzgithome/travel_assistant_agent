@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-A Chinese-language travel assistant agent using a ReAct-style tool-calling loop. The agent analyzes user requests and sequentially invokes tools to gather date, weather, attractions, transport, restaurant, budget, map, and route information for 10 preset Chinese cities (上海、北京、广州、深圳、南京、杭州、成都、重庆、武汉、西安).
+A Chinese-language travel assistant agent using a ReAct-style tool-calling loop. The agent analyzes user requests and sequentially invokes tools to gather date, weather, attractions, transport, restaurant, hotel, budget, map, and route information for 11 preset Chinese cities (上海、北京、广州、深圳、南京、杭州、成都、重庆、武汉、西安、芜湖).
 
 ## Running
 
@@ -46,10 +46,12 @@ Hello-Agent-New/
 ├── tools/
 │   ├── __init__.py
 │   ├── date.py              # get_current_date (日期星期)
-│   ├── weather.py           # get_weather (wttr.in)
+│   ├── weather.py           # get_weather + get_weather_forecast (wttr.in)
+│   ├── holiday.py           # check_holiday (内置节假日数据)
 │   ├── attraction.py        # get_attraction (Tavily)
 │   ├── transport.py         # get_transport (Tavily)
 │   ├── restaurant.py        # get_restaurant (Tavily)
+│   ├── hotel.py             # get_hotel (Tavily)
 │   ├── budget.py            # estimate_budget (Tavily)
 │   ├── map_api.py           # show_map + get_route (高德地图)
 │   └── registry.py          # available_tools 字典
@@ -68,10 +70,13 @@ Hello-Agent-New/
 | Tool | API | Description |
 |------|-----|-------------|
 | `get_current_date()` | — | 当前日期和星期 |
+| `check_holiday(date_str)` | — | 查询节假日（内置 2026 年法定假日数据） |
 | `get_weather(city)` | wttr.in | 实时天气 |
+| `get_weather_forecast(city, days)` | wttr.in | 未来几天天气预报 |
 | `get_attraction(city, weather)` | Tavily | 景点推荐 |
 | `get_transport(city)` | Tavily | 交通指南 |
 | `get_restaurant(city, cuisine_type)` | Tavily | 美食推荐 |
+| `get_hotel(city, budget_level)` | Tavily | 住宿推荐 |
 | `estimate_budget(city, days, travel_style)` | Tavily | 预算估算 |
 | `show_map(city, attractions)` | 高德地图 | 景点位置 |
 | `get_route(city, origin, destination, mode)` | 高德地图 | 路线规划 |
@@ -81,7 +86,7 @@ Hello-Agent-New/
 - Flask app serving a chat UI on port 5050
 - Per-session assistant via Flask session + UUID, stored in `assistants` dict (avoids concurrent user interference)
 - SSE streaming: `_run_tool_cycle_stream()` uses `generate_stream()` to yield LLM tokens in real-time
-- Frontend renders streaming tokens with a blinking cursor, then replaces them with structured tool-call cards
+- Frontend: raw streaming tokens hidden during tool call steps; structured tool-call cards displayed directly; completed cards stay visible with lower opacity (no auto-collapse)
 - Imports from `travel_assistant_agent.py` (compat layer re-exports)
 
 ## Key Conventions
@@ -106,8 +111,9 @@ Hello-Agent-New/
 2. **Finish regex**: changed from greedy `(.*)` to lazy `(.*?)` in `_compress_old_messages` to correctly handle answers containing `]`.
 3. **Debug mode removed**: `app.run(debug=True)` changed to `app.run()` to prevent exposing the interactive debugger in production.
 4. **Invalid action handling**: when LLM output doesn't follow `Thought:/Action:` format (e.g. direct answers to non-travel questions), treat as final answer instead of appending error observation and looping.
-5. **Excessive tool calls**: strengthened system prompt to require single-tool-call-then-Finish for simple queries; tool card body max-height set to 400px with scroll; auto-collapse previous tool cards when new one is created.
-6. **Multi-turn display breakage**: added `done` SSE event from backend (always sent regardless of code path); frontend tracks `gotAnswer` flag and falls back to showing raw LLM output if no `answer` event received; `assistant.save()` wrapped in try/except to prevent blocking response.
+5. **Excessive tool calls**: strengthened system prompt to require single-tool-call-then-Finish for simple queries.
+6. **Frontend display collapse**: removed auto-collapse of previous tool cards (completed cards stay visible with lower opacity); removed max-height limit on tool card body; hidden raw streaming tokens during tool call steps to avoid jarring flash of Thought:/Action: text.
+7. **Multi-turn display breakage**: added `done` SSE event from backend (always sent regardless of code path); frontend tracks `gotAnswer` flag and falls back to showing raw LLM output if no `answer` event received; `assistant.save()` wrapped in try/except to prevent blocking response.
 
 ## Refactoring
 
