@@ -89,9 +89,14 @@ class TravelAssistant:
         if len(self.messages) > self.context_messages_limit:
             self.messages = self.messages[-self.context_messages_limit:]
 
-    def get_context_summary(self) -> str:
+    def get_context_summary(self, tool_call_count: int = 0) -> str:
         """获取对话上下文摘要（用于系统提示）"""
-        return f"当前支持的预设城市：{', '.join(SUPPORTED_CITIES)}"
+        base = f"当前支持的预设城市：{', '.join(SUPPORTED_CITIES)}"
+        if tool_call_count >= 6:
+            base += "\n【重要】你已经调用了足够的工具，收集了足够的信息。下一步必须用Finish[...]输出最终答案，禁止再调用任何工具！"
+        elif tool_call_count >= 4:
+            base += "\n【提示】你已经调用了多个工具，信息已基本充足。请考虑是否可以用Finish输出答案。"
+        return base
 
 
 def _extract_action(llm_output: str) -> tuple[str, bool]:
@@ -130,11 +135,12 @@ def _parse_action(action_str: str):
 
 def _run_tool_cycle(assistant: TravelAssistant, verbose: bool = True):
     """运行单个工具调用循环（ReAct 模式）"""
+    tool_call_count = 0
     for i in range(assistant.max_turns):
         if verbose:
             print(f"\n--- 工具调用 #{i + 1} ---\n")
 
-        context_prompt = f"\n\n【系统提示】{assistant.get_context_summary()}"
+        context_prompt = f"\n\n【系统提示】{assistant.get_context_summary(tool_call_count)}"
         system_message = {"role": "system", "content": AGENT_SYSTEM_PROMPT + context_prompt}
         llm_messages = [system_message] + assistant.messages
 
@@ -159,6 +165,7 @@ def _run_tool_cycle(assistant: TravelAssistant, verbose: bool = True):
             return action_data['content']
 
         elif action_data["type"] == "tool":
+            tool_call_count += 1
             tool_name = action_data["name"]
             kwargs = action_data["kwargs"]
 

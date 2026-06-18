@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>智能旅行助手</title>
+<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -26,11 +27,15 @@ body {
   background: var(--gray-100);
   color: var(--gray-900);
   height: 100vh;
-  display: flex;
-  flex-direction: column;
+  margin: 0;
 }
 
-/* ── Header ── */
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
 .header {
   background: linear-gradient(135deg, var(--primary), #7c3aed);
   color: #fff;
@@ -54,7 +59,6 @@ body {
 }
 #resetBtn:hover { background: rgba(255,255,255,0.35); }
 
-/* ── Chat Area ── */
 #chatArea {
   flex: 1;
   overflow-y: auto;
@@ -64,7 +68,7 @@ body {
   gap: 16px;
 }
 
-/* ── Messages ── */
+/* Messages */
 .msg {
   max-width: 75%;
   padding: 12px 16px;
@@ -73,8 +77,8 @@ body {
   font-size: 14px;
   white-space: pre-wrap;
   word-break: break-word;
-  animation: fadeIn 0.25s ease;
 }
+.msg-enter-active { animation: fadeIn 0.25s ease; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
 .msg.user {
@@ -91,56 +95,95 @@ body {
   border-bottom-left-radius: 4px;
 }
 
-/* ── Tool Call Card ── */
-.tool-card {
+/* Tool Group */
+.tool-group {
   align-self: flex-start;
   max-width: 85%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Processing status indicator */
+.tool-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
   background: #fff;
   border: 1px solid var(--gray-200);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  overflow: hidden;
-  animation: fadeIn 0.3s ease;
+  font-size: 13px;
+  color: var(--gray-500);
+  animation: fadeIn 0.25s ease;
 }
-.tool-card-header {
+.tool-status-dot {
+  width: 8px; height: 8px;
+  background: var(--primary);
+  border-radius: 50%;
+  animation: pulse 1.2s infinite;
+}
+@keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.8); } }
+
+/* Collapsed summary after done */
+.tool-summary {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 14px;
+  padding: 8px 14px;
   background: var(--gray-50);
-  border-bottom: 1px solid var(--gray-200);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius);
+  font-size: 12px;
+  color: var(--gray-500);
   cursor: pointer;
   user-select: none;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--gray-700);
+  transition: background 0.2s;
 }
-.tool-card-header:hover { background: var(--gray-100); }
-.tool-card-header .arrow {
+.tool-summary:hover { background: var(--gray-100); }
+.tool-summary .arrow {
   transition: transform 0.2s;
   font-size: 11px;
   color: var(--gray-500);
 }
-.tool-card-header .arrow.open { transform: rotate(90deg); }
+.tool-summary .arrow.open { transform: rotate(90deg); }
 
-.tool-card-body {
-  padding: 0;
-  max-height: 0;
+/* Expanded detail */
+.tool-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tool-step {
+  background: #fff;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius);
   overflow: hidden;
-  transition: max-height 0.3s ease, padding 0.3s ease;
 }
-.tool-card-body.open {
-  max-height: none;
-  padding: 12px 14px;
-  overflow: visible;
+
+.tool-step-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  background: var(--gray-50);
+  border-bottom: 1px solid var(--gray-200);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gray-700);
 }
-.tool-card.completed { opacity: 0.85; }
-.tool-card.completed .tool-card-header { background: var(--gray-100); }
+
+.tool-step-body {
+  padding: 10px 14px;
+  font-size: 13px;
+  line-height: 1.6;
+}
 
 .tool-section {
   margin-bottom: 10px;
-  font-size: 13px;
-  line-height: 1.6;
 }
 .tool-section:last-child { margin-bottom: 0; }
 .tool-label {
@@ -166,18 +209,17 @@ body {
   margin: 0;
 }
 
-/* ── Loading Dots ── */
+/* Loading */
 .loading {
   align-self: flex-start;
   padding: 14px 18px;
   background: #fff;
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  display: none;
+  display: flex;
   gap: 5px;
   align-items: center;
 }
-.loading.show { display: flex; }
 .loading span {
   width: 7px; height: 7px;
   background: var(--gray-300);
@@ -188,35 +230,7 @@ body {
 .loading span:nth-child(3) { animation-delay: 0.4s; }
 @keyframes bounce { 0%,80%,100% { transform: scale(0.6); opacity: 0.4; } 40% { transform: scale(1); opacity: 1; } }
 
-/* ── Streaming Token Area ── */
-.token-stream {
-  align-self: flex-start;
-  max-width: 85%;
-  background: #fff;
-  border: 1px solid var(--gray-200);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  padding: 12px 14px;
-  font-size: 13px;
-  line-height: 1.6;
-  white-space: pre-wrap;
-  word-break: break-word;
-  font-family: "SF Mono", "Fira Code", monospace;
-  color: var(--gray-700);
-  animation: fadeIn 0.2s ease;
-}
-.token-stream .cursor {
-  display: inline-block;
-  width: 2px;
-  height: 14px;
-  background: var(--primary);
-  margin-left: 2px;
-  vertical-align: text-bottom;
-  animation: blink 0.8s infinite;
-}
-@keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
-
-/* ── Input Bar ── */
+/* Input Bar */
 .input-bar {
   padding: 16px 24px;
   background: #fff;
@@ -248,234 +262,266 @@ body {
 }
 #sendBtn:hover { background: #4338ca; }
 #sendBtn:disabled { background: var(--gray-300); cursor: not-allowed; }
+
+/* Streaming cursor */
+.cursor {
+  display: inline-block;
+  width: 2px;
+  height: 14px;
+  background: var(--primary);
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  animation: blink 0.8s infinite;
+}
+@keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
+
+/* Transitions */
+.msg-enter-active, .tool-group-enter-active { animation: fadeIn 0.25s ease; }
 </style>
 </head>
 <body>
 
-<div class="header">
-  <div>
-    <h1>智能旅行助手</h1>
-    <div class="subtitle">支持城市：上海、北京、广州、深圳、南京、杭州、成都、重庆、武汉、西安、芜湖</div>
+<div id="app">
+  <div class="header">
+    <div>
+      <h1>智能旅行助手</h1>
+      <div class="subtitle">支持城市：上海、北京、广州、深圳、南京、杭州、成都、重庆、武汉、西安、芜湖</div>
+    </div>
+    <button id="resetBtn" @click="resetChat">清空对话</button>
   </div>
-  <button id="resetBtn">清空对话</button>
-</div>
 
-<div id="chatArea">
-  <div class="msg assistant">你好！我是智能旅行助手，可以帮你查询天气、推荐景点、规划路线、估算预算等。请问你想去哪里旅行？</div>
-</div>
+  <div id="chatArea" ref="chatArea">
+    <template v-for="(msg, idx) in messages" :key="idx">
+      <!-- User message -->
+      <div v-if="msg.role === 'user'" class="msg user">{{ msg.content }}</div>
 
-<div class="loading" id="loading"><span></span><span></span><span></span></div>
+      <!-- Tool call group: hidden from display -->
+      <template v-else-if="msg.role === 'tool-group'"></template>
 
-<div class="input-bar">
-  <input type="text" id="userInput" placeholder="输入你的问题，例如：查询上海天气" autocomplete="off">
-  <button id="sendBtn">发送</button>
+      <!-- Assistant answer -->
+      <div v-else-if="msg.role === 'assistant'" class="msg assistant">{{ msg.content }}</div>
+
+
+    </template>
+
+    <!-- Loading indicator -->
+    <div v-if="isProcessing" class="loading">
+      <span></span><span></span><span></span>
+    </div>
+  </div>
+
+  <div class="input-bar">
+    <input
+      id="userInput"
+      v-model="userInput"
+      @keydown.enter.exact="sendMessage"
+      placeholder="输入你的问题，例如：查询上海天气"
+      autocomplete="off"
+    />
+    <button id="sendBtn" :disabled="isProcessing" @click="sendMessage">发送</button>
+  </div>
 </div>
 
 <script>
-const chatArea = document.getElementById('chatArea');
-const userInput = document.getElementById('userInput');
-const sendBtn = document.getElementById('sendBtn');
-const resetBtn = document.getElementById('resetBtn');
-const loading = document.getElementById('loading');
+const { createApp, ref, watch, nextTick, onMounted } = Vue;
 
-let isProcessing = false;
-let currentTokenDiv = null;
-let currentTokenText = '';
+createApp({
+  setup() {
+    const messages = ref([]);
+    const userInput = ref('');
+    const isProcessing = ref(false);
+    const chatArea = ref(null);
 
-function scrollToBottom() {
-  chatArea.scrollTop = chatArea.scrollHeight;
-}
+    // Auto-scroll
+    let streamTimer = null;
 
-function removeTokenStream() {
-  if (currentTokenDiv) {
-    currentTokenDiv.remove();
-    currentTokenDiv = null;
-    currentTokenText = '';
-  }
-}
-
-function addMessage(text, role) {
-  const div = document.createElement('div');
-  div.className = `msg ${role}`;
-  div.textContent = text;
-  chatArea.appendChild(div);
-  scrollToBottom();
-}
-
-function createToolCard() {
-  const card = document.createElement('div');
-  card.className = 'tool-card';
-
-  const header = document.createElement('div');
-  header.className = 'tool-card-header';
-  header.innerHTML = '<span class="step-title">工具调用</span><span class="arrow">&#9654;</span>';
-
-  const body = document.createElement('div');
-  body.className = 'tool-card-body';
-
-  card.appendChild(header);
-  card.appendChild(body);
-  chatArea.appendChild(card);
-
-  // Toggle collapse
-  header.addEventListener('click', () => {
-    body.classList.toggle('open');
-    header.querySelector('.arrow').classList.toggle('open');
-  });
-
-  // Start open
-  body.classList.add('open');
-  header.querySelector('.arrow').classList.add('open');
-
-  scrollToBottom();
-  return { card, header, body };
-}
-
-function updateToolCard(toolState, event) {
-  const { header, body } = toolState;
-  header.querySelector('.step-title').textContent = `工具调用 #${event.step}`;
-
-  if (event.type === 'thought') {
-    let section = body.querySelector('.section-thought');
-    if (!section) {
-      section = document.createElement('div');
-      section.className = 'tool-section section-thought';
-      section.innerHTML = '<div class="tool-label thought">Thought</div><pre></pre>';
-      body.prepend(section);
+    function scrollToBottom() {
+      nextTick(() => {
+        if (chatArea.value) {
+          chatArea.value.scrollTop = chatArea.value.scrollHeight;
+        }
+      });
     }
-    section.querySelector('pre').textContent = event.content;
-  }
 
-  if (event.type === 'action') {
-    let section = body.querySelector('.section-action');
-    if (!section) {
-      section = document.createElement('div');
-      section.className = 'tool-section section-action';
-      section.innerHTML = '<div class="tool-label action">Action</div><pre></pre>';
-      body.appendChild(section);
+    function scrollElToBottom() {
+      if (chatArea.value) {
+        chatArea.value.scrollTop = chatArea.value.scrollHeight;
+      }
     }
-    section.querySelector('pre').textContent = event.content;
-  }
 
-  if (event.type === 'observation') {
-    let section = body.querySelector('.section-observation');
-    if (!section) {
-      section = document.createElement('div');
-      section.className = 'tool-section section-observation';
-      section.innerHTML = '<div class="tool-label observation">Observation</div><pre></pre>';
-      body.appendChild(section);
+    // 直接操作 DOM 实现逐字流式输出，绕过 Vue 响应式批量更新
+    function streamAnswerToDOM(fullText) {
+      const area = chatArea.value;
+      const div = document.createElement('div');
+      div.className = 'msg assistant';
+      const span = document.createElement('span');
+      const cursor = document.createElement('span');
+      cursor.className = 'cursor';
+      div.appendChild(span);
+      div.appendChild(cursor);
+
+      // 插入到最后一个用户消息的下方
+      const userMsgs = area.querySelectorAll('.msg.user');
+      if (userMsgs.length > 0) {
+        userMsgs[userMsgs.length - 1].after(div);
+      } else {
+        area.appendChild(div);
+      }
+
+      let idx = 0;
+      streamTimer = setInterval(() => {
+        if (idx < fullText.length) {
+          span.textContent += fullText[idx];
+          idx++;
+          scrollElToBottom();
+        } else {
+          cursor.remove();
+          clearInterval(streamTimer);
+          streamTimer = null;
+        }
+      }, 30);
     }
-    section.querySelector('pre').textContent = event.content;
-  }
 
-  scrollToBottom();
-}
+    watch(messages, scrollToBottom, { deep: true });
 
-async function sendMessage() {
-  const text = userInput.value.trim();
-  if (!text || isProcessing) return;
+    function getToolName(step) {
+      if (step.action) {
+        const m = step.action.match(/^(\w+)\(/);
+        if (m) return ` — ${m[1]}`;
+      }
+      return '';
+    }
 
-  isProcessing = true;
-  sendBtn.disabled = true;
-  userInput.value = '';
-  addMessage(text, 'user');
-  loading.classList.add('show');
-  removeTokenStream();
+    function getToolStatusText(msg) {
+      if (msg.steps.length === 0) return '正在查询...';
+      const lastStep = msg.steps[msg.steps.length - 1];
+      const name = getToolName(lastStep).replace(' — ', '');
+      const nameMap = {
+        get_current_date: '日期',
+        get_weather_forecast: '天气',
+        get_weather: '天气',
+        check_holiday: '节假日',
+        get_attraction: '景点',
+        get_restaurant: '美食',
+        get_hotel: '住宿',
+        estimate_budget: '预算',
+        get_transport: '交通',
+        show_map: '地图',
+        get_route: '路线',
+      };
+      return `正在查询${nameMap[name] || name}...`;
+    }
 
-  let toolState = null;
-  let gotAnswer = false;
+    async function sendMessage() {
+      const text = userInput.value.trim();
+      if (!text || isProcessing.value) return;
 
-  try {
-    const resp = await fetch('/api/send', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: text })
+      isProcessing.value = true;
+      userInput.value = '';
+      messages.value.push({ role: 'user', content: text });
+
+      let toolGroup = null;
+      let gotAnswer = false;
+
+      try {
+        const resp = await fetch('/api/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: text })
+        });
+
+        const reader = resp.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop();
+
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            try {
+              const event = JSON.parse(line.slice(6));
+
+              if (event.type === 'status') {
+                if (toolGroup) toolGroup.done = true;
+                toolGroup = { role: 'tool-group', done: false, showDetail: false, steps: [] };
+                messages.value.push(toolGroup);
+              } else if (event.type === 'token') {
+                // Ignore raw tokens during tool steps
+              } else if (event.type === 'thought') {
+                if (toolGroup) {
+                  let step = toolGroup.steps.find(s => s.step === event.step);
+                  if (!step) {
+                    step = { step: event.step, thought: '', action: '', observation: '' };
+                    toolGroup.steps.push(step);
+                  }
+                  step.thought = event.content;
+                }
+              } else if (event.type === 'action') {
+                if (toolGroup) {
+                  let step = toolGroup.steps.find(s => s.step === event.step);
+                  if (!step) {
+                    step = { step: event.step, thought: '', action: '', observation: '' };
+                    toolGroup.steps.push(step);
+                  }
+                  step.action = event.content;
+                }
+              } else if (event.type === 'observation') {
+                if (toolGroup) {
+                  let step = toolGroup.steps.find(s => s.step === event.step);
+                  if (!step) {
+                    step = { step: event.step, thought: '', action: '', observation: '' };
+                    toolGroup.steps.push(step);
+                  }
+                  step.observation = event.content;
+                }
+              } else if (event.type === 'answer') {
+                gotAnswer = true;
+                if (toolGroup) toolGroup.done = true;
+                // 直接操作 DOM 实现逐字流式输出
+                streamAnswerToDOM(event.content);
+              } else if (event.type === 'error') {
+                gotAnswer = true;
+                if (toolGroup) toolGroup.done = true;
+                messages.value.push({ role: 'assistant', content: `错误：${event.content}` });
+              }
+            } catch (e) {
+              // Ignore parse errors
+            }
+          }
+        }
+
+        if (!gotAnswer) {
+          messages.value.push({ role: 'assistant', content: '未收到有效响应，请重试。' });
+        }
+      } catch (err) {
+        messages.value.push({ role: 'assistant', content: `请求失败：${err.message}` });
+      } finally {
+        isProcessing.value = false;
+        nextTick(() => document.getElementById('userInput').focus());
+      }
+    }
+
+    async function resetChat() {
+      if (streamTimer) { clearInterval(streamTimer); streamTimer = null; }
+      await fetch('/api/reset', { method: 'POST' });
+      messages.value = [
+        { role: 'assistant', content: '对话已清空。请问你想去哪里旅行？' }
+      ];
+    }
+
+    onMounted(() => {
+      messages.value.push({ role: 'assistant', content: '你好！我是智能旅行助手，可以帮你查询天气、推荐景点、规划路线、估算预算等。请问你想去哪里旅行？' });
     });
 
-    const reader = resp.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = '';
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split('\n');
-      buffer = lines.pop(); // Keep incomplete line in buffer
-
-      for (const line of lines) {
-        if (!line.startsWith('data: ')) continue;
-        try {
-          const event = JSON.parse(line.slice(6));
-
-          if (event.type === 'status') {
-            // 移除上一轮的流式显示
-            removeTokenStream();
-            // 标记上一个工具卡片为已完成（不折叠，只降低透明度）
-            document.querySelectorAll('.tool-card:not(.completed)').forEach(card => {
-              card.classList.add('completed');
-            });
-            // Create a new tool card for each step
-            toolState = createToolCard();
-            toolState.header.querySelector('.step-title').textContent = `工具调用 #${event.step}`;
-          } else if (event.type === 'token') {
-            // 工具调用步骤中不显示原始 token，只在最终回答时显示
-            // 这里静默丢弃，避免显示 Thought:/Action: 原始文本
-          } else if (event.type === 'thought' || event.type === 'action' || event.type === 'observation') {
-            if (toolState) updateToolCard(toolState, event);
-          } else if (event.type === 'answer') {
-            gotAnswer = true;
-            removeTokenStream();
-            loading.classList.remove('show');
-            addMessage(event.content, 'assistant');
-          } else if (event.type === 'error') {
-            gotAnswer = true;
-            removeTokenStream();
-            loading.classList.remove('show');
-            addMessage(`错误：${event.content}`, 'assistant');
-          }
-        } catch (e) {
-          // Ignore parse errors for incomplete data
-        }
-      }
-    }
-
-    // 兜底：流结束但没有收到 answer 事件
-    if (!gotAnswer) {
-      removeTokenStream();
-      loading.classList.remove('show');
-      if (currentTokenText) {
-        addMessage(currentTokenText, 'assistant');
-      } else {
-        addMessage('未收到有效响应，请重试。', 'assistant');
-      }
-    }
-  } catch (err) {
-    loading.classList.remove('show');
-    addMessage(`请求失败：${err.message}`, 'assistant');
-  } finally {
-    removeTokenStream();
-    isProcessing = false;
-    sendBtn.disabled = false;
-    userInput.focus();
+    return { messages, userInput, isProcessing, chatArea, sendMessage, resetChat, getToolName, getToolStatusText };
   }
-}
-
-sendBtn.addEventListener('click', sendMessage);
-userInput.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault();
-    sendMessage();
-  }
-});
-
-resetBtn.addEventListener('click', async () => {
-  await fetch('/api/reset', { method: 'POST' });
-  chatArea.innerHTML = '<div class="msg assistant">对话已清空。请问你想去哪里旅行？</div>';
-});
-
-userInput.focus();
+}).mount('#app');
 </script>
 </body>
 </html>

@@ -42,10 +42,11 @@ def get_assistant() -> TravelAssistant:
 
 def _run_tool_cycle_stream(assistant: TravelAssistant):
     """ReAct loop that yields SSE event dicts for real-time streaming."""
+    tool_call_count = 0
     for i in range(assistant.max_turns):
         yield {"type": "status", "step": i + 1}
 
-        context_prompt = f"\n\n【系统提示】{assistant.get_context_summary()}"
+        context_prompt = f"\n\n【系统提示】{assistant.get_context_summary(tool_call_count)}"
         system_message = {"role": "system", "content": AGENT_SYSTEM_PROMPT + context_prompt}
         llm_messages = [system_message] + assistant.messages
 
@@ -75,6 +76,7 @@ def _run_tool_cycle_stream(assistant: TravelAssistant):
             return
 
         elif action_data["type"] == "tool":
+            tool_call_count += 1
             tool_name = action_data["name"]
             kwargs = action_data["kwargs"]
             if tool_name in available_tools:
@@ -87,13 +89,11 @@ def _run_tool_cycle_stream(assistant: TravelAssistant):
 
         else:
             # LLM 未遵循格式，视为直接回答
-            answer = action_data.get("content", output_text)
-            yield {"type": "answer", "content": answer}
+            yield {"type": "answer", "content": action_data.get("content", output_text)}
             return
 
-    final = "抱歉，我还没有找到满意的答案。请换个方式再试试。"
-    yield {"type": "answer", "content": final}
-    assistant.messages.append({"role": "assistant", "content": f"结果：{final}"})
+    yield {"type": "answer", "content": "抱歉，我还没有找到满意的答案。请换个方式再试试。"}
+    assistant.messages.append({"role": "assistant", "content": "结果：抱歉，我还没有找到满意的答案。请换个方式再试试。"})
 
 
 @app.route("/")
@@ -112,20 +112,23 @@ def send():
     assistant.add_message("user", user_input)
 
     def generate():
-        last_event = None
+        final_answer = None
         for event in _run_tool_cycle_stream(assistant):
-            last_event = event
+            if event["type"] == "answer":
+                final_answer = event["content"]
             yield f"data: {json.dumps(event, ensure_ascii=False)}\n\n"
-        if last_event:
-            assistant.add_message("result", last_event['content'])
+        if final_answer:
+            assistant.add_message("result", final_answer)
             try:
                 assistant.save()
             except Exception:
                 pass
-        # 无论什么情况都发送 done 信号，确保前端不会卡住
         yield f"data: {json.dumps({'type': 'done'}, ensure_ascii=False)}\n\n"
 
-    return Response(generate(), mimetype="text/event-stream")
+    return Response(generate(), mimetype="text/event-stream", headers={
+        "Cache-Control": "no-cache",
+        "X-Accel-Buffering": "no",
+    })
 
 
 @app.route("/api/reset", methods=["POST"])
