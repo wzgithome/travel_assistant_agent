@@ -7,8 +7,6 @@ import uuid
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from flask import Flask, Response, request, send_from_directory, session
-from flask_cors import CORS
-
 from travel_assistant_agent import (
     AGENT_SYSTEM_PROMPT,
     SUPPORTED_CITIES,
@@ -23,7 +21,6 @@ from travel_assistant_agent import (
 
 app = Flask(__name__, static_folder="static")
 app.secret_key = os.urandom(24)
-CORS(app)
 
 # 每个用户会话独立的 assistant 实例，避免并发干扰
 assistants: dict[str, TravelAssistant] = {}

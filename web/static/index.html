@@ -3,31 +3,52 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>智能旅行助手</title>
+<title>旅人手帐 — 智能旅行助手</title>
 <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=LXGW+WenKai:wght@300;400;700&family=Playfair+Display:ital,wght@0,600;1,400&display=swap" rel="stylesheet">
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
-  --primary: #4f46e5;
-  --primary-light: #eef2ff;
-  --gray-50: #f9fafb;
-  --gray-100: #f3f4f6;
-  --gray-200: #e5e7eb;
-  --gray-300: #d1d5db;
-  --gray-500: #6b7280;
-  --gray-700: #374151;
-  --gray-900: #111827;
-  --radius: 12px;
-  --shadow: 0 1px 3px rgba(0,0,0,0.1);
+  --bg: #f5f0e8;
+  --bg-deep: #ece5d8;
+  --text: #1a1a1a;
+  --text-muted: #7a7265;
+  --text-faint: #a69e93;
+  --primary: #1a6b5a;
+  --primary-light: #e8f4f0;
+  --primary-dark: #0f4a3d;
+  --accent: #b85c38;
+  --accent-light: #f8ece6;
+  --sage: #4a7c59;
+  --ink: #0f1923;
+  --paper: #faf7f2;
+  --paper-shadow: rgba(26, 26, 26, 0.06);
+  --ticket-border: #c9bfb0;
+  --font-zh: 'LXGW WenKai', 'Noto Serif SC', 'Songti SC', serif;
+  --font-en: 'Playfair Display', 'Georgia', serif;
+  --font-mono: 'SF Mono', 'Fira Code', 'Menlo', monospace;
+  --radius: 6px;
+  --radius-lg: 12px;
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  background: var(--gray-100);
-  color: var(--gray-900);
+  font-family: var(--font-zh);
+  background: var(--bg);
+  color: var(--text);
   height: 100vh;
-  margin: 0;
+  overflow: hidden;
+}
+
+/* Grain texture overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  opacity: 0.03;
+  pointer-events: none;
+  z-index: 9999;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 #app {
@@ -36,276 +57,613 @@ body {
   height: 100vh;
 }
 
+/* ═══ Header ═══ */
 .header {
-  background: linear-gradient(135deg, var(--primary), #7c3aed);
-  color: #fff;
-  padding: 16px 24px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  position: relative;
+  background: var(--ink);
+  color: #e8e2d8;
+  padding: 28px 32px 24px;
   flex-shrink: 0;
+  overflow: hidden;
 }
-.header h1 { font-size: 18px; font-weight: 600; }
-.header .subtitle { font-size: 12px; opacity: 0.8; margin-top: 2px; }
-#resetBtn {
-  background: rgba(255,255,255,0.2);
-  color: #fff;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 13px;
-  transition: background 0.2s;
-}
-#resetBtn:hover { background: rgba(255,255,255,0.35); }
 
+/* Ink wash gradient */
+.header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 120% 80% at 20% 100%, rgba(26, 107, 90, 0.4), transparent),
+    radial-gradient(ellipse 80% 60% at 80% 0%, rgba(184, 92, 56, 0.15), transparent);
+  pointer-events: none;
+}
+
+/* Mountain silhouette */
+.header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 40px;
+  background: var(--bg);
+  clip-path: polygon(
+    0% 100%, 0% 60%, 3% 55%, 7% 40%, 11% 50%, 15% 30%, 19% 45%,
+    22% 25%, 25% 35%, 28% 15%, 31% 30%, 34% 20%, 37% 35%,
+    40% 10%, 43% 25%, 46% 18%, 49% 30%, 52% 5%, 55% 20%,
+    58% 15%, 61% 28%, 64% 12%, 67% 22%, 70% 8%, 73% 18%,
+    76% 25%, 79% 15%, 82% 30%, 85% 20%, 88% 35%, 91% 25%,
+    94% 40%, 97% 35%, 100% 50%, 100% 100%
+  );
+  pointer-events: none;
+}
+
+.header-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+.header-left h1 {
+  font-family: var(--font-zh);
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: #f0ebe3;
+}
+
+.header-left h1 span {
+  font-family: var(--font-en);
+  font-style: italic;
+  font-size: 13px;
+  font-weight: 400;
+  opacity: 0.5;
+  margin-left: 12px;
+  letter-spacing: 1px;
+}
+
+.header-left .subtitle {
+  font-size: 12px;
+  color: rgba(232, 226, 216, 0.45);
+  margin-top: 6px;
+  letter-spacing: 1px;
+}
+
+#resetBtn {
+  background: transparent;
+  color: rgba(232, 226, 216, 0.5);
+  border: 1px solid rgba(232, 226, 216, 0.15);
+  padding: 6px 16px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-family: var(--font-zh);
+  font-size: 12px;
+  transition: all 0.25s;
+  letter-spacing: 1px;
+}
+
+#resetBtn:hover {
+  color: rgba(232, 226, 216, 0.9);
+  border-color: rgba(232, 226, 216, 0.35);
+  background: rgba(232, 226, 216, 0.06);
+}
+
+/* ═══ Chat Area ═══ */
 #chatArea {
   flex: 1;
   overflow-y: auto;
-  padding: 24px;
+  padding: 32px 24px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
+  scroll-behavior: smooth;
 }
 
-/* Messages */
+/* Custom scrollbar */
+#chatArea::-webkit-scrollbar { width: 5px; }
+#chatArea::-webkit-scrollbar-track { background: transparent; }
+#chatArea::-webkit-scrollbar-thumb { background: var(--ticket-border); border-radius: 10px; }
+
+/* ═══ Messages ═══ */
 .msg {
-  max-width: 75%;
-  padding: 12px 16px;
-  border-radius: var(--radius);
-  line-height: 1.6;
-  font-size: 14px;
+  max-width: 72%;
+  padding: 14px 18px;
+  font-size: 14.5px;
+  line-height: 1.8;
   white-space: pre-wrap;
   word-break: break-word;
+  animation: msgIn 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
-.msg-enter-active { animation: fadeIn 0.25s ease; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+@keyframes msgIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
 .msg.user {
   align-self: flex-end;
   background: var(--primary);
-  color: #fff;
-  border-bottom-right-radius: 4px;
-}
-.msg.assistant {
-  align-self: flex-start;
-  background: #fff;
-  color: var(--gray-900);
-  box-shadow: var(--shadow);
-  border-bottom-left-radius: 4px;
+  color: #f0ebe3;
+  border-radius: var(--radius-lg) var(--radius-lg) var(--radius) var(--radius-lg);
+  box-shadow: 0 2px 12px rgba(26, 107, 90, 0.15);
 }
 
-/* Tool Group */
+.msg.assistant {
+  align-self: flex-start;
+  background: var(--paper);
+  color: var(--text);
+  border-radius: var(--radius-lg) var(--radius-lg) var(--radius-lg) var(--radius);
+  border-left: 3px solid var(--primary);
+  box-shadow: 0 1px 8px var(--paper-shadow);
+  position: relative;
+}
+
+.msg.assistant::before {
+  content: '旅';
+  position: absolute;
+  top: -8px;
+  left: -14px;
+  font-size: 10px;
+  color: var(--primary);
+  background: var(--bg);
+  padding: 1px 3px;
+  border-radius: 3px;
+  font-weight: 700;
+  opacity: 0.6;
+}
+
+/* ═══ Streaming cursor ═══ */
+.cursor {
+  display: inline-block;
+  width: 2px;
+  height: 15px;
+  background: var(--primary);
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  animation: blink 0.8s ease infinite;
+}
+
+@keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
+
+/* ═══ Tool Group ═══ */
 .tool-group {
   align-self: flex-start;
-  max-width: 85%;
+  max-width: 88%;
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
+  animation: msgIn 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* Processing status indicator */
+/* Processing status */
 .tool-status {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 14px;
-  background: #fff;
-  border: 1px solid var(--gray-200);
+  gap: 10px;
+  padding: 10px 16px;
+  background: var(--paper);
+  border: 1px dashed var(--ticket-border);
   border-radius: var(--radius);
-  box-shadow: var(--shadow);
   font-size: 13px;
-  color: var(--gray-500);
-  animation: fadeIn 0.25s ease;
+  color: var(--text-muted);
 }
+
 .tool-status-dot {
-  width: 8px; height: 8px;
+  width: 6px;
+  height: 6px;
   background: var(--primary);
   border-radius: 50%;
-  animation: pulse 1.2s infinite;
+  animation: pulse 1.4s ease infinite;
 }
-@keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.8); } }
 
-/* Collapsed summary after done */
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.7); }
+}
+
+/* Tool summary (collapsed) */
 .tool-summary {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 14px;
-  background: var(--gray-50);
-  border: 1px solid var(--gray-200);
+  padding: 8px 16px;
+  background: var(--bg-deep);
+  border: 1px dashed var(--ticket-border);
   border-radius: var(--radius);
   font-size: 12px;
-  color: var(--gray-500);
+  color: var(--text-faint);
   cursor: pointer;
-  user-select: none;
-  transition: background 0.2s;
+  transition: all 0.2s;
+  letter-spacing: 0.5px;
 }
-.tool-summary:hover { background: var(--gray-100); }
-.tool-summary .arrow {
-  transition: transform 0.2s;
-  font-size: 11px;
-  color: var(--gray-500);
-}
-.tool-summary .arrow.open { transform: rotate(90deg); }
 
-/* Expanded detail */
+.tool-summary:hover {
+  background: var(--paper);
+  color: var(--text-muted);
+}
+
+.tool-summary .arrow {
+  font-size: 10px;
+  transition: transform 0.25s;
+  color: var(--text-faint);
+}
+
+.tool-summary .arrow.open {
+  transform: rotate(90deg);
+}
+
+/* Tool detail (expanded) */
 .tool-detail {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
+/* Ticket-style tool step */
 .tool-step {
-  background: #fff;
-  border: 1px solid var(--gray-200);
+  background: var(--paper);
+  border: 1px solid var(--ticket-border);
   border-radius: var(--radius);
   overflow: hidden;
+  position: relative;
+}
+
+/* Perforated edge effect */
+.tool-step::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: repeating-linear-gradient(
+    to bottom,
+    var(--primary) 0px,
+    var(--primary) 3px,
+    transparent 3px,
+    transparent 8px
+  );
+  opacity: 0.4;
 }
 
 .tool-step-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 14px;
-  background: var(--gray-50);
-  border-bottom: 1px solid var(--gray-200);
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--gray-700);
+  padding: 8px 14px 8px 18px;
+  background: var(--bg-deep);
+  border-bottom: 1px solid var(--ticket-border);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 1px;
+}
+
+.tool-step-header .step-num {
+  font-family: var(--font-en);
+  font-size: 11px;
+  color: var(--text-faint);
 }
 
 .tool-step-body {
-  padding: 10px 14px;
+  padding: 12px 16px 12px 20px;
   font-size: 13px;
-  line-height: 1.6;
+  line-height: 1.7;
 }
 
 .tool-section {
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
-.tool-section:last-child { margin-bottom: 0; }
+
+.tool-section:last-child {
+  margin-bottom: 0;
+}
+
 .tool-label {
-  font-weight: 600;
-  font-size: 11px;
+  font-weight: 700;
+  font-size: 10px;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 4px;
+  letter-spacing: 2px;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
-.tool-label.thought { color: #3b82f6; }
-.tool-label.action { color: #8b5cf6; }
-.tool-label.observation { color: #10b981; }
+
+.tool-label::before {
+  content: '';
+  width: 12px;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.4;
+}
+
+.tool-label.thought { color: var(--primary); }
+.tool-label.action { color: var(--accent); }
+.tool-label.observation { color: var(--sage); }
 
 .tool-section pre {
-  background: var(--gray-50);
-  padding: 8px 10px;
-  border-radius: 6px;
-  font-family: "SF Mono", "Fira Code", monospace;
-  font-size: 12px;
+  background: var(--bg);
+  padding: 10px 12px;
+  border-radius: 4px;
+  font-family: var(--font-zh);
+  font-size: 12.5px;
+  line-height: 1.7;
   overflow-x: auto;
   white-space: pre-wrap;
   word-break: break-word;
   margin: 0;
+  border: 1px solid rgba(0,0,0,0.04);
 }
 
-/* Loading */
+/* ═══ Loading ═══ */
 .loading {
   align-self: flex-start;
-  padding: 14px 18px;
-  background: #fff;
+  padding: 14px 20px;
+  background: var(--paper);
+  border: 1px dashed var(--ticket-border);
   border-radius: var(--radius);
-  box-shadow: var(--shadow);
   display: flex;
-  gap: 5px;
+  gap: 6px;
   align-items: center;
 }
-.loading span {
-  width: 7px; height: 7px;
-  background: var(--gray-300);
-  border-radius: 50%;
-  animation: bounce 1.2s infinite;
-}
-.loading span:nth-child(2) { animation-delay: 0.2s; }
-.loading span:nth-child(3) { animation-delay: 0.4s; }
-@keyframes bounce { 0%,80%,100% { transform: scale(0.6); opacity: 0.4; } 40% { transform: scale(1); opacity: 1; } }
 
-/* Input Bar */
-.input-bar {
-  padding: 16px 24px;
-  background: #fff;
-  border-top: 1px solid var(--gray-200);
-  display: flex;
-  gap: 10px;
-  flex-shrink: 0;
+.loading span {
+  width: 5px;
+  height: 5px;
+  background: var(--primary);
+  border-radius: 50%;
+  animation: loadBounce 1.4s ease infinite;
 }
+
+.loading span:nth-child(2) { animation-delay: 0.16s; }
+.loading span:nth-child(3) { animation-delay: 0.32s; }
+
+@keyframes loadBounce {
+  0%, 80%, 100% { transform: scale(0.5); opacity: 0.3; }
+  40% { transform: scale(1); opacity: 1; }
+}
+
+/* ═══ Welcome message ═══ */
+.welcome {
+  align-self: center;
+  text-align: center;
+  padding: 48px 24px 24px;
+  animation: fadeUp 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.welcome-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  filter: grayscale(0.2);
+}
+
+.welcome h2 {
+  font-family: var(--font-zh);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 8px;
+  letter-spacing: 2px;
+}
+
+.welcome p {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.8;
+  max-width: 360px;
+  margin: 0 auto;
+}
+
+.welcome .cities {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 20px;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.welcome .city-tag {
+  font-size: 12px;
+  padding: 4px 12px;
+  background: var(--paper);
+  border: 1px solid var(--ticket-border);
+  border-radius: 20px;
+  color: var(--text-muted);
+  cursor: default;
+  transition: all 0.2s;
+}
+
+.welcome .city-tag:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--primary-light);
+}
+
+/* ═══ Input Bar ═══ */
+.input-bar {
+  padding: 16px 24px 20px;
+  background: var(--paper);
+  border-top: 1px solid rgba(0,0,0,0.06);
+  display: flex;
+  gap: 12px;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.input-bar::before {
+  content: '';
+  position: absolute;
+  top: -20px;
+  left: 0;
+  right: 0;
+  height: 20px;
+  background: linear-gradient(to top, var(--bg), transparent);
+  pointer-events: none;
+}
+
 #userInput {
   flex: 1;
-  padding: 12px 16px;
-  border: 1px solid var(--gray-300);
-  border-radius: 10px;
+  padding: 12px 18px;
+  border: 1px solid var(--ticket-border);
+  border-radius: var(--radius);
+  font-family: var(--font-zh);
   font-size: 14px;
+  background: var(--bg);
+  color: var(--text);
   outline: none;
-  transition: border-color 0.2s;
+  transition: all 0.25s;
 }
-#userInput:focus { border-color: var(--primary); }
+
+#userInput:focus {
+  border-color: var(--primary);
+  background: var(--paper);
+  box-shadow: 0 0 0 3px rgba(26, 107, 90, 0.08);
+}
+
+#userInput::placeholder {
+  color: var(--text-faint);
+  font-size: 13px;
+}
+
 #sendBtn {
   background: var(--primary);
-  color: #fff;
+  color: #f0ebe3;
   border: none;
-  padding: 12px 24px;
-  border-radius: 10px;
+  padding: 12px 28px;
+  border-radius: var(--radius);
+  font-family: var(--font-zh);
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 700;
   cursor: pointer;
-  transition: background 0.2s;
+  letter-spacing: 2px;
+  transition: all 0.25s;
 }
-#sendBtn:hover { background: #4338ca; }
-#sendBtn:disabled { background: var(--gray-300); cursor: not-allowed; }
 
-/* Streaming cursor */
-.cursor {
-  display: inline-block;
-  width: 2px;
-  height: 14px;
-  background: var(--primary);
-  margin-left: 2px;
-  vertical-align: text-bottom;
-  animation: blink 0.8s infinite;
+#sendBtn:hover {
+  background: var(--primary-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(26, 107, 90, 0.2);
 }
-@keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
 
-/* Transitions */
-.msg-enter-active, .tool-group-enter-active { animation: fadeIn 0.25s ease; }
+#sendBtn:active {
+  transform: translateY(0);
+}
+
+#sendBtn:disabled {
+  background: var(--ticket-border);
+  color: var(--text-faint);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* ═══ Transitions ═══ */
+.tool-group-enter-active { animation: msgIn 0.4s cubic-bezier(0.22, 1, 0.36, 1); }
+
+/* ═══ Responsive ═══ */
+@media (max-width: 640px) {
+  .header { padding: 20px 16px 18px; }
+  .header-left h1 { font-size: 20px; letter-spacing: 2px; }
+  .header-left h1 span { display: none; }
+  #chatArea { padding: 20px 14px; gap: 16px; }
+  .msg { max-width: 88%; font-size: 14px; }
+  .tool-group { max-width: 95%; }
+  .input-bar { padding: 12px 14px 16px; }
+  #sendBtn { padding: 12px 20px; letter-spacing: 1px; }
+  .welcome { padding: 32px 16px 16px; }
+}
 </style>
 </head>
 <body>
 
 <div id="app">
   <div class="header">
-    <div>
-      <h1>智能旅行助手</h1>
-      <div class="subtitle">支持城市：上海、北京、广州、深圳、南京、杭州、成都、重庆、武汉、西安、芜湖</div>
+    <div class="header-content">
+      <div class="header-left">
+        <h1>旅人手帐 <span>Travel Journal</span></h1>
+        <div class="subtitle">上海 · 北京 · 广州 · 深圳 · 南京 · 杭州 · 成都 · 重庆 · 武汉 · 西安 · 芜湖</div>
+      </div>
+      <button id="resetBtn" @click="resetChat">清空对话</button>
     </div>
-    <button id="resetBtn" @click="resetChat">清空对话</button>
   </div>
 
   <div id="chatArea" ref="chatArea">
+    <!-- Welcome -->
+    <div v-if="showWelcome" class="welcome">
+      <div class="welcome-icon">🏔️</div>
+      <h2>你好，旅行者</h2>
+      <p>我可以帮你查询天气、推荐景点、规划路线、<br>估算预算，定制专属行程。</p>
+      <div class="cities">
+        <span class="city-tag" v-for="c in cities" :key="c">{{ c }}</span>
+      </div>
+    </div>
+
     <template v-for="(msg, idx) in messages" :key="idx">
       <!-- User message -->
       <div v-if="msg.role === 'user'" class="msg user">{{ msg.content }}</div>
 
-      <!-- Tool call group: hidden from display -->
-      <template v-else-if="msg.role === 'tool-group'"></template>
+      <!-- Tool call group -->
+      <template v-else-if="msg.role === 'tool-group'">
+        <div class="tool-group" v-if="!msg.done">
+          <div class="tool-status">
+            <span class="tool-status-dot"></span>
+            <span>{{ getToolStatusText(msg) }}</span>
+          </div>
+        </div>
+        <div class="tool-group" v-else>
+          <div class="tool-summary" @click="msg.showDetail = !msg.showDetail">
+            <span>已查询 {{ msg.steps.length }} 个工具</span>
+            <span class="arrow" :class="{ open: msg.showDetail }">▸</span>
+          </div>
+          <div class="tool-detail" v-if="msg.showDetail">
+            <div class="tool-step" v-for="(step, si) in msg.steps" :key="si">
+              <div class="tool-step-header">
+                <span>{{ getToolDisplayName(step) }}</span>
+                <span class="step-num">#{{ si + 1 }}</span>
+              </div>
+              <div class="tool-step-body">
+                <div class="tool-section" v-if="step.thought">
+                  <div class="tool-label thought">思考</div>
+                  <pre>{{ step.thought }}</pre>
+                </div>
+                <div class="tool-section" v-if="step.action">
+                  <div class="tool-label action">调用</div>
+                  <pre>{{ step.action }}</pre>
+                </div>
+                <div class="tool-section" v-if="step.observation">
+                  <div class="tool-label observation">结果</div>
+                  <pre>{{ step.observation }}</pre>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
 
       <!-- Assistant answer -->
       <div v-else-if="msg.role === 'assistant'" class="msg assistant">{{ msg.content }}</div>
-
-
     </template>
 
-    <!-- Loading indicator -->
-    <div v-if="isProcessing" class="loading">
+    <!-- Streaming display -->
+    <div v-if="streamText" class="msg assistant">
+      <span>{{ streamText }}</span>
+      <span class="cursor"></span>
+    </div>
+
+    <!-- Loading -->
+    <div v-if="isProcessing && !streamText && !hasToolGroup" class="loading">
       <span></span><span></span><span></span>
     </div>
   </div>
@@ -315,15 +673,15 @@ body {
       id="userInput"
       v-model="userInput"
       @keydown.enter.exact="sendMessage"
-      placeholder="输入你的问题，例如：查询上海天气"
+      placeholder="输入你的旅行问题..."
       autocomplete="off"
     />
-    <button id="sendBtn" :disabled="isProcessing" @click="sendMessage">发送</button>
+    <button id="sendBtn" :disabled="isProcessing" @click="sendMessage">出发</button>
   </div>
 </div>
 
 <script>
-const { createApp, ref, watch, nextTick, onMounted } = Vue;
+const { createApp, ref, computed, watch, nextTick, onMounted } = Vue;
 
 createApp({
   setup() {
@@ -331,11 +689,28 @@ createApp({
     const userInput = ref('');
     const isProcessing = ref(false);
     const chatArea = ref(null);
+    const streamText = ref('');
+    const showWelcome = ref(true);
+    const cities = ['上海', '北京', '广州', '深圳', '南京', '杭州', '成都', '重庆', '武汉', '西安', '芜湖'];
 
-    // Auto-scroll
     let streamTimer = null;
 
+    const hasToolGroup = computed(() => {
+      return messages.value.some(m => m.role === 'tool-group' && !m.done);
+    });
+
     function scrollToBottom() {
+      nextTick(() => {
+        if (chatArea.value) {
+          chatArea.value.scrollTo({
+            top: chatArea.value.scrollHeight,
+            behavior: 'smooth'
+          });
+        }
+      });
+    }
+
+    function scrollToBottomInstant() {
       nextTick(() => {
         if (chatArea.value) {
           chatArea.value.scrollTop = chatArea.value.scrollHeight;
@@ -343,85 +718,72 @@ createApp({
       });
     }
 
-    function scrollElToBottom() {
-      if (chatArea.value) {
-        chatArea.value.scrollTop = chatArea.value.scrollHeight;
-      }
-    }
-
-    // 直接操作 DOM 实现逐字流式输出，绕过 Vue 响应式批量更新
-    function streamAnswerToDOM(fullText) {
-      const area = chatArea.value;
-      const div = document.createElement('div');
-      div.className = 'msg assistant';
-      const span = document.createElement('span');
-      const cursor = document.createElement('span');
-      cursor.className = 'cursor';
-      div.appendChild(span);
-      div.appendChild(cursor);
-
-      // 插入到最后一个用户消息的下方
-      const userMsgs = area.querySelectorAll('.msg.user');
-      if (userMsgs.length > 0) {
-        userMsgs[userMsgs.length - 1].after(div);
-      } else {
-        area.appendChild(div);
-      }
-
-      let idx = 0;
-      streamTimer = setInterval(() => {
-        if (idx < fullText.length) {
-          span.textContent += fullText[idx];
-          idx++;
-          scrollElToBottom();
-        } else {
-          cursor.remove();
-          clearInterval(streamTimer);
-          streamTimer = null;
+    // Typewriter streaming effect
+    function streamAnswer(fullText) {
+      return new Promise((resolve) => {
+        streamText.value = '';
+        let idx = 0;
+        const speed = 25;
+        function tick() {
+          if (idx < fullText.length) {
+            streamText.value += fullText[idx];
+            idx++;
+            scrollToBottomInstant();
+            streamTimer = setTimeout(tick, speed);
+          } else {
+            streamTimer = null;
+            streamText.value = '';
+            messages.value.push({ role: 'assistant', content: fullText });
+            scrollToBottom();
+            resolve();
+          }
         }
-      }, 30);
+        tick();
+      });
     }
 
-    watch(messages, scrollToBottom, { deep: true });
+    const nameMap = {
+      get_current_date: '日期',
+      get_weather_forecast: '天气预报',
+      get_weather: '天气',
+      check_holiday: '节假日',
+      get_attraction: '景点',
+      get_restaurant: '美食',
+      get_hotel: '住宿',
+      estimate_budget: '预算',
+      get_transport: '交通',
+      show_map: '地图',
+      get_route: '路线',
+    };
 
-    function getToolName(step) {
+    function getToolDisplayName(step) {
       if (step.action) {
         const m = step.action.match(/^(\w+)\(/);
-        if (m) return ` — ${m[1]}`;
+        if (m) return nameMap[m[1]] || m[1];
       }
-      return '';
+      return '查询中';
     }
 
     function getToolStatusText(msg) {
-      if (msg.steps.length === 0) return '正在查询...';
+      if (msg.steps.length === 0) return '正在思考...';
       const lastStep = msg.steps[msg.steps.length - 1];
-      const name = getToolName(lastStep).replace(' — ', '');
-      const nameMap = {
-        get_current_date: '日期',
-        get_weather_forecast: '天气',
-        get_weather: '天气',
-        check_holiday: '节假日',
-        get_attraction: '景点',
-        get_restaurant: '美食',
-        get_hotel: '住宿',
-        estimate_budget: '预算',
-        get_transport: '交通',
-        show_map: '地图',
-        get_route: '路线',
-      };
-      return `正在查询${nameMap[name] || name}...`;
+      const name = getToolDisplayName(lastStep);
+      return `正在查询${name}...`;
     }
 
     async function sendMessage() {
       const text = userInput.value.trim();
       if (!text || isProcessing.value) return;
 
+      showWelcome.value = false;
       isProcessing.value = true;
       userInput.value = '';
       messages.value.push({ role: 'user', content: text });
+      scrollToBottom();
 
       let toolGroup = null;
       let gotAnswer = false;
+      let answerContent = '';
 
       try {
         const resp = await fetch('/api/send', {
@@ -451,8 +813,9 @@ createApp({
                 if (toolGroup) toolGroup.done = true;
                 toolGroup = { role: 'tool-group', done: false, showDetail: false, steps: [] };
                 messages.value.push(toolGroup);
+                scrollToBottom();
               } else if (event.type === 'token') {
-                // Ignore raw tokens during tool steps
+                // Ignore raw tokens — we use structured events
               } else if (event.type === 'thought') {
                 if (toolGroup) {
                   let step = toolGroup.steps.find(s => s.step === event.step);
@@ -480,15 +843,15 @@ createApp({
                   }
                   step.observation = event.content;
                 }
+                scrollToBottom();
               } else if (event.type === 'answer') {
                 gotAnswer = true;
+                answerContent = event.content;
                 if (toolGroup) toolGroup.done = true;
-                // 直接操作 DOM 实现逐字流式输出
-                streamAnswerToDOM(event.content);
               } else if (event.type === 'error') {
                 gotAnswer = true;
+                answerContent = `错误：${event.content}`;
                 if (toolGroup) toolGroup.done = true;
-                messages.value.push({ role: 'assistant', content: `错误：${event.content}` });
               }
             } catch (e) {
               // Ignore parse errors
@@ -496,7 +859,9 @@ createApp({
           }
         }
 
-        if (!gotAnswer) {
+        if (gotAnswer && answerContent) {
+          await streamAnswer(answerContent);
+        } else if (!gotAnswer) {
           messages.value.push({ role: 'assistant', content: '未收到有效响应，请重试。' });
         }
       } catch (err) {
@@ -508,18 +873,22 @@ createApp({
     }
 
     async function resetChat() {
-      if (streamTimer) { clearInterval(streamTimer); streamTimer = null; }
+      if (streamTimer) { clearTimeout(streamTimer); streamTimer = null; }
+      streamText.value = '';
       await fetch('/api/reset', { method: 'POST' });
-      messages.value = [
-        { role: 'assistant', content: '对话已清空。请问你想去哪里旅行？' }
-      ];
+      messages.value = [];
+      showWelcome.value = true;
     }
 
     onMounted(() => {
-      messages.value.push({ role: 'assistant', content: '你好！我是智能旅行助手，可以帮你查询天气、推荐景点、规划路线、估算预算等。请问你想去哪里旅行？' });
+      nextTick(() => document.getElementById('userInput').focus());
     });
 
-    return { messages, userInput, isProcessing, chatArea, sendMessage, resetChat, getToolName, getToolStatusText };
+    return {
+      messages, userInput, isProcessing, chatArea,
+      streamText, showWelcome, cities, hasToolGroup,
+      sendMessage, resetChat, getToolDisplayName, getToolStatusText
+    };
   }
 }).mount('#app');
 </script>
