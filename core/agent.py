@@ -17,6 +17,23 @@ llm = OpenAICompatibleClient(
 )
 
 
+def _extract_finish_content(text: str) -> str | None:
+    """从文本中提取 Finish[...] 的内容，正确处理嵌套括号"""
+    idx = text.find('Finish[')
+    if idx == -1:
+        return None
+    start = idx + len('Finish')
+    depth = 0
+    for i in range(start, len(text)):
+        if text[i] == '[':
+            depth += 1
+        elif text[i] == ']':
+            depth -= 1
+            if depth == 0:
+                return text[start + 1:i]
+    return None
+
+
 class TravelAssistant:
     """旅行助手核心类，管理多轮对话状态（OpenAI messages 格式）"""
 
@@ -80,9 +97,9 @@ class TravelAssistant:
             msg = self.messages[i]
             if msg["role"] == "assistant":
                 content = msg["content"]
-                finish_match = re.search(r'Finish\[(.*?)]', content)
-                if finish_match:
-                    self.messages[i]["content"] = finish_match.group(1)
+                finish_content = _extract_finish_content(content)
+                if finish_content is not None:
+                    self.messages[i]["content"] = finish_content
                 elif len(content) > 300 and ("Thought:" in content or "Observation:" in content):
                     self.messages[i]["content"] = content[:200] + "...(已压缩)"
 
@@ -118,9 +135,9 @@ def _parse_action(action_str: str):
         action_str = action_match.group(1).strip()
 
     if action_str.startswith("Finish"):
-        match = re.match(r"Finish\[(.*)]", action_str)
-        if match:
-            return {"type": "finish", "content": match.group(1)}
+        content = _extract_finish_content(action_str)
+        if content is not None:
+            return {"type": "finish", "content": content}
         return {"type": "finish", "content": action_str[len("Finish"):].strip("[]() ")}
 
     tool_match = re.search(r'(\w+)\((.*)\)', action_str)

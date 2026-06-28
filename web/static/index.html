@@ -481,8 +481,9 @@ body::before {
   border: 1px solid var(--ticket-border);
   border-radius: 20px;
   color: var(--text-muted);
-  cursor: default;
+  cursor: pointer;
   transition: all 0.2s;
+  user-select: none;
 }
 
 .welcome .city-tag:hover {
@@ -569,6 +570,209 @@ body::before {
   box-shadow: none;
 }
 
+/* ═══ Travel Style Options ═══ */
+.travel-options {
+  align-self: flex-start;
+  max-width: 88%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  animation: msgIn 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.travel-options-text {
+  background: var(--paper);
+  color: var(--text);
+  border-radius: var(--radius-lg) var(--radius-lg) var(--radius-lg) var(--radius);
+  border-left: 3px solid var(--primary);
+  box-shadow: 0 1px 8px var(--paper-shadow);
+  padding: 14px 18px;
+  font-size: 14.5px;
+  line-height: 1.8;
+  position: relative;
+}
+
+.travel-options-text::before {
+  content: '旅';
+  position: absolute;
+  top: -8px;
+  left: -14px;
+  font-size: 10px;
+  color: var(--primary);
+  background: var(--bg);
+  padding: 1px 3px;
+  border-radius: 3px;
+  font-weight: 700;
+  opacity: 0.6;
+}
+
+.style-cards {
+  display: flex;
+  gap: 8px;
+  padding: 4px 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.style-cards::-webkit-scrollbar { display: none; }
+
+.style-card {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 18px 10px 14px;
+  background: var(--paper);
+  border: 1.5px solid var(--ticket-border);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  position: relative;
+  overflow: hidden;
+  animation: cardIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+.style-card:nth-child(1) { animation-delay: 0.05s; }
+.style-card:nth-child(2) { animation-delay: 0.1s; }
+.style-card:nth-child(3) { animation-delay: 0.15s; }
+.style-card:nth-child(4) { animation-delay: 0.2s; }
+.style-card:nth-child(5) { animation-delay: 0.25s; }
+
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(10px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.style-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  transition: height 0.3s;
+}
+
+.style-card[data-color="teal"]::before { background: var(--primary); }
+.style-card[data-color="amber"]::before { background: #d4890c; }
+.style-card[data-color="red"]::before { background: #c0392b; }
+.style-card[data-color="orange"]::before { background: var(--accent); }
+.style-card[data-color="purple"]::before { background: #7c5cbf; }
+
+.style-card:hover {
+  border-color: transparent;
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(26, 26, 26, 0.1);
+}
+
+.style-card:hover::before { height: 4px; }
+
+.style-card:active {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(26, 26, 26, 0.08);
+}
+
+.style-card .style-num {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 18px;
+  height: 18px;
+  font-family: var(--font-en);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-faint);
+  background: var(--bg-deep);
+  border: 1px solid var(--ticket-border);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.style-card:hover .style-num {
+  color: var(--primary);
+  border-color: var(--primary);
+  background: var(--primary-light);
+}
+
+.style-card.selected .style-num {
+  color: #fff;
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.style-card .style-emoji {
+  font-size: 28px;
+  margin-bottom: 8px;
+  line-height: 1;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.06));
+}
+
+.style-card .style-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.style-card .style-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+
+.style-card .style-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.style-card.disabled {
+  opacity: 0.3;
+  cursor: default;
+  pointer-events: none;
+  transform: scale(0.97);
+  filter: grayscale(0.4);
+}
+
+.style-card.selected {
+  border-color: var(--primary);
+  background: var(--primary-light);
+  cursor: default;
+  pointer-events: none;
+  transform: scale(1.02);
+  box-shadow: 0 4px 16px rgba(26, 107, 90, 0.15);
+}
+
+.style-card.selected::after {
+  content: '✓';
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  font-size: 10px;
+  color: #fff;
+  font-weight: 700;
+  background: var(--primary);
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* ═══ Transitions ═══ */
 .tool-group-enter-active { animation: msgIn 0.4s cubic-bezier(0.22, 1, 0.36, 1); }
 
@@ -606,7 +810,7 @@ body::before {
       <h2>你好，旅行者</h2>
       <p>我可以帮你查询天气、推荐景点、规划路线、<br>估算预算，定制专属行程。</p>
       <div class="cities">
-        <span class="city-tag" v-for="c in cities" :key="c">{{ c }}</span>
+        <span class="city-tag" v-for="c in cities" :key="c" @click="selectCity(c)">{{ c }}</span>
       </div>
     </div>
 
@@ -652,6 +856,28 @@ body::before {
         </div>
       </template>
 
+      <!-- Travel style options -->
+      <div v-else-if="msg.role === 'travel-options'" class="travel-options">
+        <div class="travel-options-text">{{ msg.text }}</div>
+        <div class="style-cards">
+          <div
+            v-for="(opt, oi) in msg.options"
+            :key="oi"
+            class="style-card"
+            :data-color="cardColors[oi % cardColors.length]"
+            :class="{ disabled: msg.selected !== null && msg.selected !== oi, selected: msg.selected === oi }"
+            @click="selectStyle(msg, oi)"
+          >
+            <span class="style-num">{{ oi + 1 }}</span>
+            <span class="style-emoji">{{ opt.emoji }}</span>
+            <div class="style-info">
+              <span class="style-name">{{ opt.name }}</span>
+              <span class="style-desc">{{ opt.desc }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Assistant answer -->
       <div v-else-if="msg.role === 'assistant'" class="msg assistant">{{ msg.content }}</div>
     </template>
@@ -692,6 +918,14 @@ createApp({
     const streamText = ref('');
     const showWelcome = ref(true);
     const cities = ['上海', '北京', '广州', '深圳', '南京', '杭州', '成都', '重庆', '武汉', '西安', '芜湖'];
+    const cardColors = ['teal', 'amber', 'red', 'orange', 'purple'];
+    const styleOptions = [
+      { emoji: '🏖️', name: '舒适型', desc: '节奏轻松，不赶景点，享受当地生活' },
+      { emoji: '📸', name: '打卡拍照', desc: '精选网红机位，出片率最高的路线' },
+      { emoji: '⚡', name: '特种兵', desc: '时间紧凑，一天打卡多个核心景点' },
+      { emoji: '🍜', name: '美食探店', desc: '以吃为主线，穿插周边景点' },
+      { emoji: '🏛️', name: '文化深度', desc: '博物馆、历史遗迹、人文体验为主' },
+    ];
 
     let streamTimer = null;
 
@@ -860,7 +1094,20 @@ createApp({
         }
 
         if (gotAnswer && answerContent) {
-          await streamAnswer(answerContent);
+          // Check for [ASK_STYLE] marker
+          const askIdx = answerContent.indexOf('[ASK_STYLE]');
+          if (askIdx !== -1) {
+            const textBefore = answerContent.substring(0, askIdx).replace(/\n+$/, '');
+            messages.value.push({
+              role: 'travel-options',
+              text: textBefore,
+              options: styleOptions,
+              selected: null
+            });
+            scrollToBottom();
+          } else {
+            await streamAnswer(answerContent);
+          }
         } else if (!gotAnswer) {
           messages.value.push({ role: 'assistant', content: '未收到有效响应，请重试。' });
         }
@@ -870,6 +1117,21 @@ createApp({
         isProcessing.value = false;
         nextTick(() => document.getElementById('userInput').focus());
       }
+    }
+
+    async function selectCity(city) {
+      if (isProcessing.value) return;
+      userInput.value = `帮我规划${city}的旅行行程`;
+      await sendMessage();
+    }
+
+    async function selectStyle(msg, idx) {
+      if (msg.selected !== null) return;
+      msg.selected = idx;
+      const opt = msg.options[idx];
+      // Send the style choice as a user message
+      userInput.value = `我选择${opt.name}`;
+      await sendMessage();
     }
 
     async function resetChat() {
@@ -886,8 +1148,8 @@ createApp({
 
     return {
       messages, userInput, isProcessing, chatArea,
-      streamText, showWelcome, cities, hasToolGroup,
-      sendMessage, resetChat, getToolDisplayName, getToolStatusText
+      streamText, showWelcome, cities, cardColors, styleOptions, hasToolGroup,
+      sendMessage, resetChat, selectCity, selectStyle, getToolDisplayName, getToolStatusText
     };
   }
 }).mount('#app');
