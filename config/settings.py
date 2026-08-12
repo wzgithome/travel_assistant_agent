@@ -5,7 +5,7 @@ dotenv.load_dotenv()
 
 API_KEY = os.getenv("OPENAI_API_KEY2")
 BASE_URL = os.getenv("OPENAI_BASE_URL2")
-MODEL_ID = "qwen3.7-plus"
+MODEL_ID = os.getenv('MODEL_ID')
 
 TAVILY_API_KEY = os.getenv("TAVILY_API_KEY")
 if TAVILY_API_KEY:

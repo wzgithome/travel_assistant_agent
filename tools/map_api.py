@@ -63,6 +63,7 @@ def get_route(city: str, origin: str, destination: str, mode: str = "walk") -> s
         "walk": ("walking", "步行"),
         "drive": ("driving", "驾车"),
         "bus": ("transit/integrated", "公交"),
+        "subway": ("transit/integrated", "地铁"),
     }
     api_type, mode_name = mode_map.get(mode, ("walking", "步行"))
 
@@ -75,7 +76,7 @@ def get_route(city: str, origin: str, destination: str, mode: str = "walk") -> s
         }
         if mode == "drive":
             params["strategy"] = 0
-        if mode == "bus":
+        if mode in ("bus", "subway"):
             params["city1"] = city
             params["city2"] = city
             params["strategy"] = 0
@@ -122,7 +123,7 @@ def get_route(city: str, origin: str, destination: str, mode: str = "walk") -> s
                     f"距离：{distance / 1000:.1f}公里，约{duration // 60}分钟\n"
                     f"路线：\n" + "\n".join(steps_text))
 
-        elif mode == "bus":
+        elif mode in ("bus", "subway"):
             transits = data.get("route", {}).get("transits", [])
             if not transits:
                 return f"未找到从{origin}到{destination}的公交路线"
@@ -154,7 +155,10 @@ def get_route(city: str, origin: str, destination: str, mode: str = "walk") -> s
             _, duration, lines, has_subway, transit = scored[0]
 
             lines_text = " → ".join(lines) if lines else "步行"
-            tag = "地铁优先·时间最短" if has_subway else "时间最短公交路线"
+            if mode == "subway":
+                tag = "地铁线路" if has_subway else "无地铁线路，推荐公交"
+            else:
+                tag = "地铁优先·时间最短" if has_subway else "时间最短公交路线"
             icon = "🚇" if has_subway else "🚌"
             return (f"{icon} {origin} → {destination}（{tag}）\n"
                     f"约{duration // 60}分钟，乘坐：{lines_text}")

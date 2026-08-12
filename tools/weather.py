@@ -12,15 +12,17 @@ def get_weather(city: str) -> str:
         current = data['current_condition'][0]
         humidity = current['humidity']
         wind_speed = current['windSpeedKmph']
-        current_condition = data['current_condition'][0]
-        weather_desc = current_condition['weatherDesc'][0]['value']
-        temp_c = current_condition['temp_C']
+        weather_desc = current['weatherDesc'][0]['value']
+        temp_c = current['temp_C']
+        # wttr.in 返回英文天气描述，按关键词判断是否阴雨天气
+        inclement = any(kw in weather_desc.lower()
+                        for kw in ("rain", "shower", "drizzle", "overcast", "thunder", "snow", "mist", "fog"))
         return (f"🌤️ {city}今日天气:\n"
                 f"- 状况:{weather_desc}\n"
                 f"- 气温:{temp_c}°C (体感{current['FeelsLikeC']}°C)\n"
                 f"- 湿度:{humidity}%\n"
                 f"- 风速:{wind_speed}km/h\n\n"
-                f"💡 建议: {'适合户外活动' if weather_desc not in ['雨', '阴'] else '记得带伞~'}")
+                f"💡 建议: {'记得带伞~' if inclement else '适合户外活动'}")
     except requests.exceptions.RequestException as e:
         return f"错误：查询天气时遇到网络问题-{e}"
     except (KeyError, IndexError) as e:

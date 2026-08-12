@@ -39,7 +39,8 @@ class TravelAssistant:
 
     HISTORY_FILE = "chat_history.json"
 
-    def __init__(self):
+    def __init__(self, history_file: str = "chat_history.json"):
+        self.HISTORY_FILE = history_file
         self.messages: list[dict] = []
         self.max_turns = 50
         self.context_messages_limit = 6

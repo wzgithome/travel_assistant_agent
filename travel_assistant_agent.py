@@ -9,6 +9,7 @@ from core.client import OpenAICompatibleClient
 from core.agent import (
     TravelAssistant,
     _extract_action,
+    _extract_finish_content,
     _parse_action,
     _run_tool_cycle,
     llm,

@@ -12,5 +12,7 @@ dist/
 .DS_Store
 .claude/
 .idea
+web/.flask_secret
+web/sessions/
 
 

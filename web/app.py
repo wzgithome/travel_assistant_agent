@@ -2,6 +2,7 @@ import sys
 import os
 import json
 import re
+import time
 import uuid
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
@@ -13,6 +14,7 @@ from travel_assistant_agent import (
     OpenAICompatibleClient,
     TravelAssistant,
     _extract_action,
+    _extract_finish_content,
     _parse_action,
     _truncate_observation,
     available_tools,
@@ -20,21 +22,53 @@ from travel_assistant_agent import (
 )
 
 app = Flask(__name__, static_folder="static")
-app.secret_key = os.urandom(24)
 
-# 每个用户会话独立的 assistant 实例，避免并发干扰
-assistants: dict[str, TravelAssistant] = {}
+# 固定签名密钥（首次启动生成并落盘），保证服务器重启后 session cookie 依然有效
+_SECRET_FILE = os.path.join(os.path.dirname(__file__), ".flask_secret")
+if os.path.exists(_SECRET_FILE):
+    with open(_SECRET_FILE) as f:
+        app.secret_key = f.read().strip()
+else:
+    app.secret_key = os.urandom(24).hex()
+    with open(_SECRET_FILE, "w") as f:
+        f.write(app.secret_key)
+
+# 每个用户会话独立的 assistant 实例，避免并发干扰；
+# 会话历史落盘到 sessions/{sid}.json，内存只保留最近使用的实例
+assistants: dict[str, tuple[TravelAssistant, float]] = {}
+MAX_SESSIONS = 100
+SESSION_DIR = os.path.join(os.path.dirname(__file__), "sessions")
+
+
+def _session_path(sid: str) -> str:
+    return os.path.join(SESSION_DIR, f"{sid}.json")
+
+
+def _evict_sessions():
+    """会话数超上限时淘汰最久未使用的实例（历史已落盘，随时可恢复）"""
+    while len(assistants) > MAX_SESSIONS:
+        oldest_sid = min(assistants, key=lambda s: assistants[s][1])
+        assistants.pop(oldest_sid)
 
 
 def get_assistant() -> TravelAssistant:
-    """获取当前会话的 assistant，不存在则创建"""
+    """获取当前会话的 assistant：内存有则复用，否则从磁盘恢复，不存在则新建"""
     sid = session.get("sid")
     if not sid:
         sid = str(uuid.uuid4())
         session["sid"] = sid
-    if sid not in assistants:
-        assistants[sid] = TravelAssistant()
-    return assistants[sid]
+
+    now = time.time()
+    entry = assistants.get(sid)
+    if entry:
+        assistants[sid] = (entry[0], now)
+        return entry[0]
+
+    assistant = TravelAssistant(history_file=_session_path(sid))
+    assistant.load()
+    assistants[sid] = (assistant, now)
+    _evict_sessions()
+    return assistant
 
 
 def _run_tool_cycle_stream(assistant: TravelAssistant):
@@ -117,6 +151,7 @@ def send():
         if final_answer:
             assistant.add_message("result", final_answer)
             try:
+                os.makedirs(SESSION_DIR, exist_ok=True)
                 assistant.save()
             except Exception:
                 pass
@@ -126,6 +161,26 @@ def send():
         "Cache-Control": "no-cache",
         "X-Accel-Buffering": "no",
     })
+
+
+@app.route("/api/history", methods=["GET"])
+def history():
+    """返回当前会话可展示的历史消息：工具调用轨迹不可恢复，仅返回用户消息和最终答案"""
+    assistant = get_assistant()
+    display = []
+    for msg in assistant.messages:
+        if msg["role"] == "user":
+            display.append({"role": "user", "content": msg["content"]})
+            continue
+        content = msg["content"]
+        # 含 Thought/Action/Observation 的是工具轨迹：有 Finish 则提取答案，否则跳过
+        if "Thought:" in content or "Action:" in content or "Observation:" in content:
+            finish = _extract_finish_content(content)
+            if finish is None:
+                continue
+            content = finish
+        display.append({"role": "assistant", "content": content.replace("[ASK_STYLE]", "")})
+    return {"messages": display}
 
 
 @app.route("/api/reset", methods=["POST"])

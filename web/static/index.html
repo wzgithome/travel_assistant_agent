@@ -214,6 +214,32 @@ body::before {
   opacity: 0.6;
 }
 
+/* Message action buttons (copy / download) */
+.msg-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+  justify-content: flex-end;
+}
+
+.msg-btn {
+  background: transparent;
+  border: 1px dashed var(--ticket-border);
+  color: var(--text-faint);
+  font-family: var(--font-zh);
+  font-size: 11px;
+  padding: 2px 10px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: all 0.2s;
+}
+
+.msg-btn:hover {
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
 /* ═══ Streaming cursor ═══ */
 .cursor {
   display: inline-block;
@@ -879,7 +905,13 @@ body::before {
       </div>
 
       <!-- Assistant answer -->
-      <div v-else-if="msg.role === 'assistant'" class="msg assistant">{{ msg.content }}</div>
+      <div v-else-if="msg.role === 'assistant'" class="msg assistant">
+        <span>{{ msg.content }}</span>
+        <span class="msg-actions">
+          <button class="msg-btn" @click="copyMessage(msg)">{{ msg.copied ? '✓ 已复制' : '📋 复制' }}</button>
+          <button class="msg-btn" @click="downloadMessage(msg)">⬇️ 下载 .md</button>
+        </span>
+      </div>
     </template>
 
     <!-- Streaming display -->
@@ -1142,14 +1174,49 @@ createApp({
       showWelcome.value = true;
     }
 
+    // 恢复当前会话的历史消息（服务端按 session 持久化）
+    async function loadHistory() {
+      try {
+        const resp = await fetch('/api/history');
+        if (!resp.ok) return;
+        const data = await resp.json();
+        const hist = data.messages || [];
+        for (const m of hist) {
+          messages.value.push({ role: m.role, content: m.content });
+        }
+        if (hist.length) showWelcome.value = false;
+        scrollToBottom();
+      } catch (e) { /* 历史加载失败不影响使用 */ }
+    }
+
+    async function copyMessage(msg) {
+      try {
+        await navigator.clipboard.writeText(msg.content);
+        msg.copied = true;
+        setTimeout(() => { msg.copied = false; }, 1500);
+      } catch (e) { /* 剪贴板不可用时静默忽略 */ }
+    }
+
+    function downloadMessage(msg) {
+      const date = new Date().toISOString().slice(0, 10);
+      const blob = new Blob([msg.content], { type: 'text/markdown;charset=utf-8' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `旅行行程-${date}.md`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
     onMounted(() => {
+      loadHistory();
       nextTick(() => document.getElementById('userInput').focus());
     });
 
     return {
       messages, userInput, isProcessing, chatArea,
       streamText, showWelcome, cities, cardColors, styleOptions, hasToolGroup,
-      sendMessage, resetChat, selectCity, selectStyle, getToolDisplayName, getToolStatusText
+      sendMessage, resetChat, selectCity, selectStyle, getToolDisplayName, getToolStatusText,
+      copyMessage, downloadMessage
     };
   }
 }).mount('#app');
