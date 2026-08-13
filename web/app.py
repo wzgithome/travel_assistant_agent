@@ -10,7 +10,6 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from flask import Flask, Response, request, send_from_directory, session
 from travel_assistant_agent import (
     AGENT_SYSTEM_PROMPT,
-    SUPPORTED_CITIES,
     OpenAICompatibleClient,
     TravelAssistant,
     _extract_action,

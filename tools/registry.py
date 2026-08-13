@@ -7,6 +7,7 @@ from tools.map_api import show_map, get_route
 from tools.date import get_current_date
 from tools.holiday import check_holiday
 from tools.hotel import get_hotel
+from tools.knowledge import get_knowledge
 
 available_tools = {
     "get_weather": get_weather,
@@ -20,4 +21,5 @@ available_tools = {
     "get_current_date": get_current_date,
     "check_holiday": check_holiday,
     "get_hotel": get_hotel,
+    "get_knowledge": get_knowledge,
 }

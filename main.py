@@ -1,6 +1,5 @@
 import sys
 from core.agent import TravelAssistant, _run_tool_cycle
-from core.prompt import SUPPORTED_CITIES
 
 
 def run_interactive():
@@ -10,7 +9,7 @@ def run_interactive():
 
     print("=" * 60)
     print("🌤️ 欢迎使用智能旅行助手！")
-    print(f"💡 支持的预设城市：{', '.join(SUPPORTED_CITIES)}")
+    print("💡 支持全国任意城市，直接输入城市名即可")
     print("📝 可用指令：exit (退出), clear (清空记录), help (帮助)")
     print("=" * 60 + "\n")
 

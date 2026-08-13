@@ -10,16 +10,17 @@ def get_weather(city: str) -> str:
         response.raise_for_status()
         data = response.json()
         current = data['current_condition'][0]
-        humidity = current['humidity']
-        wind_speed = current['windSpeedKmph']
-        weather_desc = current['weatherDesc'][0]['value']
-        temp_c = current['temp_C']
+        weather_desc = current.get('weatherDesc', [{}])[0].get('value', '未知')
+        temp_c = current.get('temp_C', '未知')
+        feels = current.get('FeelsLikeC', temp_c)
+        humidity = current.get('humidity', '未知')
+        wind_speed = current.get('windSpeedKmph', '未知')
         # wttr.in 返回英文天气描述，按关键词判断是否阴雨天气
         inclement = any(kw in weather_desc.lower()
                         for kw in ("rain", "shower", "drizzle", "overcast", "thunder", "snow", "mist", "fog"))
         return (f"🌤️ {city}今日天气:\n"
                 f"- 状况:{weather_desc}\n"
-                f"- 气温:{temp_c}°C (体感{current['FeelsLikeC']}°C)\n"
+                f"- 气温:{temp_c}°C (体感{feels}°C)\n"
                 f"- 湿度:{humidity}%\n"
                 f"- 风速:{wind_speed}km/h\n\n"
                 f"💡 建议: {'记得带伞~' if inclement else '适合户外活动'}")
@@ -45,8 +46,8 @@ def get_weather_forecast(city: str, days: int = 3) -> str:
         lines = [f"📅 {city}未来{len(forecasts)}天天气预报:"]
         for day in forecasts:
             date = day["date"]
-            max_temp = day["maxtempC"]
-            min_temp = day["mintempC"]
+            max_temp = day.get("maxtempC", "未知")
+            min_temp = day.get("mintempC", "未知")
             # 取白天天气描述
             hourly = day.get("hourly", [{}])
             desc = hourly[len(hourly) // 2].get("weatherDesc", [{}])[0].get("value", "未知") if hourly else "未知"

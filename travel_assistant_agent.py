@@ -4,7 +4,7 @@
 新代码请直接从各模块导入。
 """
 
-from core.prompt import AGENT_SYSTEM_PROMPT, SUPPORTED_CITIES
+from core.prompt import AGENT_SYSTEM_PROMPT
 from core.client import OpenAICompatibleClient
 from core.agent import (
     TravelAssistant,

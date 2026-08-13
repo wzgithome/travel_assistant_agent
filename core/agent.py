@@ -3,7 +3,7 @@ import re
 import json
 from datetime import datetime
 
-from core.prompt import AGENT_SYSTEM_PROMPT, SUPPORTED_CITIES
+from core.prompt import AGENT_SYSTEM_PROMPT
 from core.client import OpenAICompatibleClient
 from config.settings import API_KEY, BASE_URL, MODEL_ID
 from tools.registry import available_tools
@@ -109,7 +109,7 @@ class TravelAssistant:
 
     def get_context_summary(self, tool_call_count: int = 0) -> str:
         """获取对话上下文摘要（用于系统提示）"""
-        base = f"当前支持的预设城市：{', '.join(SUPPORTED_CITIES)}"
+        base = "支持全国任意城市，城市名以用户输入为准"
         if tool_call_count >= 6:
             base += "\n【重要】你已经调用了足够的工具，收集了足够的信息。下一步必须用Finish[...]输出最终答案，禁止再调用任何工具！"
         elif tool_call_count >= 4:
