@@ -58,8 +58,9 @@ pip install openai tavily-python requests python-dotenv flask flask-cors
 在项目根目录创建 `.env` 文件：
 
 ```env
-OPENAI_API_KEY3=your_openai_api_key
-OPENAI_BASE_URL3=your_base_url
+OPENAI_API_KEY2=your_openai_api_key
+OPENAI_BASE_URL2=your_base_url
+MODEL_ID=your_model
 TAVILY_API_KEY=your_tavily_api_key
 GAODE_API_KEY=your_gaode_api_key
 ```
