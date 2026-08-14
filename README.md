@@ -65,7 +65,6 @@ TAVILY_API_KEY=your_tavily_api_key
 GAODE_API_KEY=your_gaode_api_key
 ```
 
-> 当前使用的模型为 `kimi-k2.5`，如需切换模型请修改 `config/settings.py` 中的 `MODEL_ID` 及对应的 API Key 和 Base URL。
 
 ### 4. 运行
 
